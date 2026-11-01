@@ -1,0 +1,42 @@
+name: Fork test build (no release)
+
+# Fork-only: builds the current branch with the same Windows/MSVC toolchain
+# and build script as dev_build.yml, but publishes nothing. The package is
+# kept as a workflow artifact only. Not meant for upstream.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fork-test-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.repository != 'bonsaibauer/shroudforge'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Build, test and package
+        shell: pwsh
+        env:
+          CROWDIN_PROJECT_ID: ${{ vars.CROWDIN_PROJECT_ID || '938941' }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+        run: .\dev\build\dev_build.ps1 -BuildNumber "${{ github.run_id }}"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v7
+        with:
+          name: shroudforge-fork-test-${{ github.run_id }}
+          path: |
+            build/shroudforge-*.zip
+            build/shroudforge-*.zip.sha256
+            build/x64/shroudforge-runtime.dll
+          if-no-files-found: error
+          retention-days: 14
