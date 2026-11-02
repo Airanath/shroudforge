@@ -6,6 +6,9 @@ name: Fork test build (no release)
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - "test/**"
 
 permissions:
   contents: read
