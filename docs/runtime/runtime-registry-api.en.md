@@ -36,7 +36,7 @@ The supported selectors for type/value/ECS APIs are a qualified name or a
 identity details out of mods while preserving exact type ownership checks.
 
 On KFC4 client build 25966634, the existing `runtime.ecs.query`, `resolve`,
-`read`, `read_bytes` and `read_fields` APIs can use the original engine owner
+`entity_id`, `read`, `read_bytes` and `read_fields` APIs can use the original engine owner
 chain independently of the game-thread dispatcher. `ownerLayout` and
 `ecsReadLayout` in the exact-image read profile describe this shared ownership
 and storage layout. Component names, indices, runtime/template roles and sizes
@@ -55,6 +55,12 @@ requires a valid column whose stride exactly matches the reflected storage
 size. A zero or mismatched stride is reported as unavailable, including for
 types with reflected fields. Queries are incremental. Retry a pending query
 from a later update until it returns a result table.
+
+`runtime.ecs.entity_id(entity)` is the inverse of `resolve`: it returns the real
+`keen::EntityId.id` behind a current handle, or `nil, reason` for a stale or
+unknown handle. It uses the same access check as `resolve`. Use it where the
+game addresses an entity by its id, such as an interaction target, but the mod
+only holds the handle from `query` or `query_bounds`.
 
 This backend revalidates the owner, entity table, table membership, generation,
 archetype and component bytes. A changed or unstable snapshot returns a reason
