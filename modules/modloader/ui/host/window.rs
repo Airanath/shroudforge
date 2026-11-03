@@ -327,41 +327,20 @@ pub(crate) fn run_with_arguments(arguments: Arguments) -> Result<(), Box<dyn std
     )
     .with_ipc_handler(handler);
     // Fork test build only: SHROUDFORGE_WEBVIEW_DEBUG_PORT=<port> opens the
-    // WebView2 DevTools protocol on 127.0.0.1 for UI profiling under Proton,
-    // and SHROUDFORGE_WEBVIEW_EXTRA_ARGS appends browser flags for A/B tests.
+    // WebView2 DevTools protocol on 127.0.0.1 for UI profiling under Proton.
     // wry always sets its own browser arguments, which hides the runtime's
     // WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS variable and registry policy, so
     // the wry defaults are repeated here.
-    let debug_port = std::env::var("SHROUDFORGE_WEBVIEW_DEBUG_PORT")
+    let builder = match std::env::var("SHROUDFORGE_WEBVIEW_DEBUG_PORT")
         .ok()
-        .and_then(|value| value.trim().parse::<u16>().ok());
-    let extra_args = std::env::var("SHROUDFORGE_WEBVIEW_EXTRA_ARGS")
-        .ok()
-        .map(|value| value.trim().to_string())
-        .filter(|value| !value.is_empty());
-    let builder = if debug_port.is_some() || extra_args.is_some() {
-        let mut args = String::from(
+        .and_then(|value| value.trim().parse::<u16>().ok())
+    {
+        Some(port) => builder.with_additional_browser_args(&format!(
             "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection \
-             --autoplay-policy=no-user-gesture-required",
-        );
-        if let Some(port) = debug_port {
-            args.push_str(&format!(
-                " --remote-debugging-port={port} --remote-debugging-address=127.0.0.1"
-            ));
-        }
-        if let Some(extra) = &extra_args {
-            args.push(' ');
-            args.push_str(extra);
-        }
-        let _ = shroudforge_logging::append(
-            &arguments.root,
-            'I',
-            "ui",
-            &format!("Modloader WebView test arguments: {args}"),
-        );
-        builder.with_additional_browser_args(args)
-    } else {
-        builder
+             --autoplay-policy=no-user-gesture-required \
+             --remote-debugging-port={port} --remote-debugging-address=127.0.0.1"
+        )),
+        None => builder,
     };
     let webview = builder.build(&window)?;
     let _ = webview.set_visible(window.is_visible() && !window.is_minimized());
@@ -1239,9 +1218,6 @@ pub(crate) fn run_with_arguments(arguments: Arguments) -> Result<(), Box<dyn std
                     }
                 }
             }
-            Event::UserEvent(UiEvent::PageCursor(icon)) => {
-                window.set_cursor_icon(icon);
-            }
             Event::UserEvent(UiEvent::KeybindLabels(bindings)) => {
                 let labels: std::collections::BTreeMap<_, _> = bindings
                     .into_iter()
@@ -1263,6 +1239,9 @@ pub(crate) fn run_with_arguments(arguments: Arguments) -> Result<(), Box<dyn std
                     "window.dispatchEvent(new CustomEvent('shroudforge-keybind-captured',{{detail:{payload}}}));"
                 ));
                 report_command_result(
+            Event::UserEvent(UiEvent::PageCursor(icon)) => {
+                window.set_cursor_icon(icon);
+            }
                     &arguments.root,
                     &webview,
                     &request_id,
