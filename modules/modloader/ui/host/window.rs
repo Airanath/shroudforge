@@ -302,7 +302,7 @@ pub(crate) fn run_with_arguments(arguments: Arguments) -> Result<(), Box<dyn std
         env!("CARGO_MANIFEST_DIR"),
         "/../../../build/ui/modloader/index.html"
     ));
-    let webview = WebViewBuilder::new_with_web_context(&mut web_context)
+    let builder = WebViewBuilder::new_with_web_context(&mut web_context)
         .with_custom_protocol("shroudforge".into(), move |_webview_id, request| {
             let (status, content_type, body) = if request.uri().path() == "/index.html" {
                 (
@@ -325,8 +325,24 @@ pub(crate) fn run_with_arguments(arguments: Arguments) -> Result<(), Box<dyn std
         })
         .with_https_scheme(true)
         .with_url("shroudforge://localhost/index.html")
-        .with_ipc_handler(handler)
-        .build(&window)?;
+        .with_ipc_handler(handler);
+    // Fork test build only: SHROUDFORGE_WEBVIEW_DEBUG_PORT=<port> opens the
+    // WebView2 DevTools protocol on 127.0.0.1 for UI profiling under Proton.
+    // wry always sets its own browser arguments, which hides the runtime's
+    // WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS variable and registry policy, so
+    // the wry defaults are repeated here.
+    let builder = match std::env::var("SHROUDFORGE_WEBVIEW_DEBUG_PORT")
+        .ok()
+        .and_then(|value| value.trim().parse::<u16>().ok())
+    {
+        Some(port) => builder.with_additional_browser_args(&format!(
+            "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection \
+             --autoplay-policy=no-user-gesture-required \
+             --remote-debugging-port={port} --remote-debugging-address=127.0.0.1"
+        )),
+        None => builder,
+    };
+    let webview = builder.build(&window)?;
     let _ = webview.set_visible(window.is_visible() && !window.is_minimized());
 
     let mut shown = arguments.desktop;
