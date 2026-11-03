@@ -1223,9 +1223,6 @@ pub(crate) fn run_with_arguments(arguments: Arguments) -> Result<(), Box<dyn std
                     "window.dispatchEvent(new CustomEvent('shroudforge-keybind-captured',{{detail:{payload}}}));"
                 ));
                 report_command_result(
-            Event::UserEvent(UiEvent::PageCursor(icon)) => {
-                window.set_cursor_icon(icon);
-            }
                     &arguments.root,
                     &webview,
                     &request_id,
@@ -1236,6 +1233,9 @@ pub(crate) fn run_with_arguments(arguments: Arguments) -> Result<(), Box<dyn std
                     None,
                     false,
                 );
+            }
+            Event::UserEvent(UiEvent::PageCursor(icon)) => {
+                window.set_cursor_icon(icon);
             }
             Event::UserEvent(UiEvent::Toggle) => {
                 if !arguments.server && !shroudforge_hotkeys::is_capture_active()
