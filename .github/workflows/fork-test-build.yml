@@ -228,15 +228,16 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Rust dependency checkout failed.' }
           .\dev\parser\prepare_parser.ps1
 
-      - name: Set build version from branch
+      - name: Set build version from the VERSION file
         shell: pwsh
-        env:
-          BUILD_VERSION: ${{ github.ref_name }}
         run: |
-          if ($env:BUILD_VERSION -notmatch '^\d+\.\d+\.\d+$') {
-            throw "The selected branch must be a version such as 1.0.0."
+          # Fork test branches are not named MAJOR.MINOR.PATCH, so the
+          # version comes from the VERSION file instead of the branch name.
+          $version = (Get-Content -LiteralPath VERSION -Raw).Trim()
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "VERSION must use MAJOR.MINOR.PATCH: $version"
           }
-          Set-Content -LiteralPath VERSION -Value $env:BUILD_VERSION -Encoding ascii
+          Set-Content -LiteralPath VERSION -Value $version -Encoding ascii
 
       - name: Restore dependency caches
         uses: ./.github/actions/restore-build-caches
@@ -301,13 +302,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set version from branch
+      - name: Set version from the VERSION file
         id: version
         shell: pwsh
         run: |
-          $version = "${{ github.ref_name }}"
+          # Fork test branches are not named MAJOR.MINOR.PATCH.
+          $version = (Get-Content -LiteralPath VERSION -Raw).Trim()
           if ($version -notmatch '^\d+\.\d+\.\d+$') {
-            throw "The selected branch must be a version such as 1.0.0. Current branch: $version"
+            throw "VERSION must use MAJOR.MINOR.PATCH: $version"
           }
           Set-Content -LiteralPath VERSION -Value $version -Encoding ascii
           "value=$version" >> $env:GITHUB_OUTPUT
