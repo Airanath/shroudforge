@@ -7,6 +7,7 @@ mod query_entities;
 mod read_component;
 mod read_component_catalog;
 mod read_component_registry;
+mod read_entity_identity;
 mod resolve_entity;
 mod write_component;
 use access_component_fields::*;
@@ -14,6 +15,7 @@ use query_entities::*;
 use read_component::*;
 use read_component_catalog::*;
 use read_component_registry::*;
+use read_entity_identity::*;
 use resolve_entity::*;
 use write_component::*;
 pub(super) fn create_ecs(lua: &mlua::Lua, r#mod: &Mod) -> mlua::Result<mlua::Table> {
@@ -26,6 +28,7 @@ pub(super) fn create_ecs(lua: &mlua::Lua, r#mod: &Mod) -> mlua::Result<mlua::Tab
     add_function_with_mod(lua, &table, "query", r#mod, lua_ecs_query)?;
     add_function_with_mod(lua, &table, "query_bounds", r#mod, lua_ecs_query_bounds)?;
     add_function_with_mod(lua, &table, "resolve", r#mod, lua_ecs_resolve)?;
+    add_function_with_mod(lua, &table, "entity_id", r#mod, lua_ecs_entity_id)?;
     add_function_with_mod(lua, &table, "read", r#mod, lua_ecs_read)?;
     add_function_with_mod(lua, &table, "read_bytes", r#mod, lua_ecs_read_bytes)?;
     add_function_with_mod(lua, &table, "read_fields", r#mod, lua_ecs_read_fields)?;
