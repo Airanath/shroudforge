@@ -623,6 +623,16 @@ function runtime.ecs.query_bounds(bounds, padding, ...) end
 --- @return string? reason
 function runtime.ecs.resolve(keen_entity_id) end
 
+--- Return the real `keen::EntityId.id` of a current ShroudForge handle, the
+--- inverse of `runtime.ecs.resolve`. Use it where the game addresses an entity
+--- by its id but the mod holds the handle from `query` or `query_bounds`.
+--- A stale or unknown handle returns `nil, reason`. Needs the same access as
+--- `runtime.ecs.resolve`.
+--- @param entity integer
+--- @return integer? keen_entity_id
+--- @return string? reason
+function runtime.ecs.entity_id(entity) end
+
 --- Read one live ECS component by an opaque entity handle and real `keen::ecs::*` type.
 --- Returns `nil, reason` until the current game build has a verified ECS provider.
 --- @param entity integer
