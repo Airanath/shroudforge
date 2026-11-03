@@ -17,6 +17,7 @@ mod log_configuration_changes;
 mod log_configuration_errors;
 mod log_player_name_detection;
 mod mark_control_action;
+mod mirror_page_cursor;
 mod notify_command_result;
 mod native_menu_toggle;
 mod open_external_link;
